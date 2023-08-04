@@ -11,12 +11,13 @@ class Seq2Seq(nn.Module):
         self.decoder = decoder
         self.device = device
 
-    def forward(self, src, trg=None, teaching=0.5):
+    def forward(self, src, trg=None, teaching=0.5, max_len:int = 15):
         """
         Inputs:
             src: source sequence tensor of shape (batch_size, src_len)
             trg: target sequence tensor of shape (batch_size, trg_len), or None for inference
             teaching: the probability of using teacher forcing
+            max_len: maximum length of output for inference only
         Outputs:
             outputs: decoder outputs tensor of shape (batch_size, trg_len, trg_vocab_size)
         """
@@ -42,15 +43,16 @@ class Seq2Seq(nn.Module):
             return outputs
         else:
             # inference mode
-            batch_size, max_len = src.shape
+            batch_size, _ = src.shape
+            trg_len = max_len
             trg_vocab_size = self.decoder.output_size
             # tensor to store decoder outputs
-            outputs = torch.zeros(batch_size, max_len, trg_vocab_size).to(self.device)
+            outputs = torch.zeros(batch_size, trg_len, trg_vocab_size).to(self.device)
             # last hidden state and cell state of the encoder as initial hidden and cell state for the decoder
             hidden, cell = self.encoder(src)
             # use the <sos> token as the initial decoder input
             inp = torch.ones(batch_size).to(self.device, dtype=torch.long)
-            for t in range(1, max_len):
+            for t in range(1, trg_len):
                 output, hidden, cell = self.decoder(inp, hidden, cell)
                 outputs[:, t] = output
                 # use predicted token as input for next timestep
