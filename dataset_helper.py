@@ -5,9 +5,10 @@ import torchtext
 from vocab import Vocab
 
 
-def load_df():
+def load_df(max_rows: int = 0):
     """
     Loads the dataset into a Pandas Dataframe for processing.
+    :parameter max_rows: train data set contains 86821 rows. The dev set 5928 which can not be limited.
     :returns df_train, df_dev
     """
     # create Dictionary objects of question and answer
@@ -16,10 +17,14 @@ def load_df():
     # fetch dataset
     train, dev = torchtext.datasets.SQuAD2(root='./data', split=('train', 'dev'))
     # iterate over training set
+    cnt_rows = 0
     for c, question, answer, i in train:
         if answer[0]:
             dict_train["question"].append(question)
             dict_train["answer"].append(answer[0])
+            cnt_rows += 1
+        if 0 < max_rows <= cnt_rows:
+            break
     df_train = pd.DataFrame.from_dict(dict_train)
     # iterate over dev set
     for c, question, answer, i  in dev:
@@ -27,14 +32,16 @@ def load_df():
             dict_dev["question"].append(question)
             dict_dev["answer"].append(answer[0])
     df_dev = pd.DataFrame.from_dict(dict_dev)
-
+    print(f'Train data frame contains {len(df_train.index)} rows.')
+    print(f'Dev data frame contains {len(df_dev.index)} rows.')
     return df_train, df_dev
 
 
-def prepare_text(count_limit:int = 5, min_length:int = 3, max_length:int = 13, stage:str = 'dev'):
+def prepare_text(max_rows_train_set: int = 0, count_limit: int = 5, min_length: int = 3, max_length: int = 13, stage: str = 'dev'):
     """
     Creates a vocab object and cleans and tokenizes the question and answer.
     :var
+        max_rows_train_set: limit the number of rows in the train data set. Train data set contains 86821 rows.
         count_limit: remove words that occur less than count_limit times in the text, default=5
         min_length: Minimum length of question or answer, default = 3
         max_length: Maximum length of question or answer, default=13
@@ -46,18 +53,19 @@ def prepare_text(count_limit:int = 5, min_length:int = 3, max_length:int = 13, s
 
     my_vocab = Vocab(name='qna')
     # load data
-    train_df, dev_df = load_df()
+    train_df, dev_df = load_df(max_rows=max_rows_train_set)
     # add cleaned words to vocab
     if stage == 'dev':
         text_df = dev_df
     else:
         text_df = train_df
+    # add vocab
     my_vocab.add_words(text_df)
     # strip words that have only rare occurrence
     cnt_in = my_vocab.count
     my_vocab.strip_low_word_counts(limit=count_limit)
     cnt_out = my_vocab.count
-    print(f'Word count in vocab is {cnt_out}. Removed {cnt_in-cnt_out} words during cleanup.')
+    print(f'Word count in vocab is now {cnt_out}, removed {cnt_in-cnt_out} words during cleanup.')
     # clean df and remove text that does contain words that have been stripped from vocab
     print(f'Data frame contains {len(text_df.index)} rows.')
     text_df['q_tokens'] = text_df.question.apply(my_vocab.clean_text)
@@ -105,7 +113,7 @@ def prepare_text(count_limit:int = 5, min_length:int = 3, max_length:int = 13, s
     return my_vocab, text_df
 
 
-def train_test_split(input_df, fraction_train=0.7, fraction_test_val = 0.75):
+def train_test_split(input_df, fraction_train: float = 0.7, fraction_test_val: float = 0.75):
     """
     Input:
         input_df
@@ -133,7 +141,8 @@ def train_test_split(input_df, fraction_train=0.7, fraction_test_val = 0.75):
     print(f'Valid set of length: {len(valid_out)}')
     return train_out, test_out, valid_out
 
-def get_dataloader(train_set, test_set, valid_set, batch_size):
+
+def get_dataloader(train_set, test_set, valid_set, batch_size: int):
     """
     create data loader iterators
 

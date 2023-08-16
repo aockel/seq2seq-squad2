@@ -11,7 +11,7 @@ class Seq2Seq(nn.Module):
         self.decoder = decoder
         self.device = device
 
-    def forward(self, src, trg=None, teaching=0.5, max_len:int = 15):
+    def forward(self, src, trg=None, teaching=0.5, max_len: int = 15):
         """
         Inputs:
             src: source sequence tensor of shape (batch_size, src_len)
