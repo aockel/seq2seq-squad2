@@ -24,6 +24,8 @@ class Decoder(nn.Module):
         # The LSTM produces an output by passing the hidden state to the Linear layer
         self.lin_out = nn.Linear(self.hidden_size, self.output_size)
         self.dropout = nn.Dropout(dropout)
+        # optional test with LogSoftmax
+        self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, decoder_input, hidden, cell):
         """
@@ -41,5 +43,5 @@ class Decoder(nn.Module):
         embedded = self.dropout(self.embedding(decoder_input))
         output, (hidden, cell) = self.lstm(embedded, (hidden, cell))
         prediction = self.lin_out(output.squeeze(1))  # remove the time dimension
-
+        prediction = self.softmax(prediction)
         return prediction, hidden, cell

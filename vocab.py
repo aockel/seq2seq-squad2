@@ -1,6 +1,8 @@
-from nltk.stem.porter import *
+from nltk.stem.porter import re
 from nltk.tokenize import RegexpTokenizer
-
+from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+import nltk
 
 
 class Vocab:
@@ -10,15 +12,24 @@ class Vocab:
         self.count = 4
         self.words = {"<SOS>": 0, "<EOS>": 1, "<UNK>": 2, "<PAD>": 3}
         self.wordcount = {"<SOS>": 9999999, "<EOS>": 9999999, "<UNK>": 9999999, "<PAD>": 9999999}
+        # download stopwords when initializing the vocab object
+        nltk.download('stopwords')
 
     # This function cleans our words before adding them
     @staticmethod
     def clean_text(text: str):
         text = re.sub(r"([.!?])", r" \1", text)
         text = re.sub(r"\s+", r" ", text).strip().lower()
+        # tokenize
         tokenizer = RegexpTokenizer(r'\w+')
-        text = tokenizer.tokenize(text)
-        return text
+        words = tokenizer.tokenize(text)
+        # remove stop words
+        stop_words = set(stopwords.words('english'))
+        words_no_stop = [w for w in words if not w in stop_words]
+        # stemmer; source see https://www.geeksforgeeks.org/snowball-stemmer-nlp/
+        snow_stemmer = SnowballStemmer(language='english')
+        text_stemmed = [snow_stemmer.stem(w) for w in words_no_stop]
+        return text_stemmed
 
     def word2index(self, text):
         indexed_out = []
@@ -50,7 +61,7 @@ class Vocab:
             for idx, r in df.iterrows():
                 text = self.clean_text(r[i])
                 for t in text:
-                    if count % 15000 == 0:
+                    if count % 50000 == 0:
                         print("Adding word {} to our vocabulary.".format(count))
                     self.index_word(t)
                     count += 1
