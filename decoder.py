@@ -20,7 +20,7 @@ class Decoder(nn.Module):
         self.lstm_layer = lstm_layer
 
         self.embedding = nn.Embedding(input_size, embedding_dim)
-        self.lstm = nn.LSTM(embedding_dim, self.hidden_size, num_layers=self.lstm_layer, batch_first=True, dropout=dropout)
+        self.lstm = nn.LSTM(embedding_dim, self.hidden_size, num_layers=self.lstm_layer, dropout=dropout)
         # The LSTM produces an output by passing the hidden state to the Linear layer
         self.lin_out = nn.Linear(self.hidden_size, self.output_size)
         self.dropout = nn.Dropout(dropout)
@@ -38,10 +38,17 @@ class Decoder(nn.Module):
                 hidden: the hidden state
                 cell: the cell state
         """
+        # decoder_input shape is torch.Size([batch_size])
+        # add a time dimension of size 1
+        decoder_input = decoder_input.unsqueeze(0)
+        # torch.Size([1, batch_size])
         # embeds the input token using an embedding layer of size (input_size, hidden_size)
-        decoder_input = decoder_input.unsqueeze(1)  # add a time dimension of size 1
         embedded = self.dropout(self.embedding(decoder_input))
         output, (hidden, cell) = self.lstm(embedded, (hidden, cell))
-        prediction = self.lin_out(output.squeeze(1))  # remove the time dimension
-        prediction = self.softmax(prediction)
-        return prediction, hidden, cell
+        # torch.Size([1, batch_size, hidden_size])
+        # prediction = self.lin_out(output.squeeze(1))  # remove the time dimension
+        output = self.lin_out(output.squeeze(0))  # remove the time dimension
+        # torch.Size([batch_size, vocab_size])
+        output = self.softmax(output)
+        # output shape torch.Size([batch_size, vocab_size])
+        return output, hidden, cell

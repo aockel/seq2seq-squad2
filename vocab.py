@@ -87,12 +87,3 @@ class Vocab:
         self.index = dict(enumerate(self.index.values()))
         for key, value in self.index.items():
             self.words[value] = key
-
-
-
-
-
-
-
-
-
