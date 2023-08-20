@@ -52,3 +52,4 @@ class Decoder(nn.Module):
         output = self.softmax(output)
         # output shape torch.Size([batch_size, vocab_size])
         return output, hidden, cell
+  
