@@ -1,5 +1,5 @@
 pandas==2.0.3
-nltk==3.8.1
+nltk==3.9
 more_itertools==9.1.0
 torch==2.0
 torchvision==0.15
