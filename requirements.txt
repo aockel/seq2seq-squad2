@@ -1,7 +1,7 @@
 pandas==2.0.3
 nltk==3.9
 more_itertools==9.1.0
-torch==2.2.0
+torch==2.6.0
 torchvision==0.15
 torchtext==0.15.0
 gensim==4.3.1
